@@ -45,12 +45,26 @@ pub async fn resolve_applications_command(
             continue;
         };
         let name = summary.name.clone();
-        detail_fetches.spawn(async move { source.details(&name).await.ok() });
+        let source_name = summary.source;
+        detail_fetches.spawn(async move {
+            let result = source.details(&name).await;
+            if let Err(e) = &result {
+                log::warn!(
+                    "failed to fetch details for {} from {}: {}",
+                    name,
+                    source_name,
+                    e
+                );
+            }
+            result
+        });
     }
     let mut all_details = Vec::new();
-    while let Some(details) = detail_fetches.join_next().await {
-        if let Some(details) = details.unwrap_or_default() {
-            all_details.push(details);
+    while let Some(result) = detail_fetches.join_next().await {
+        match result {
+            Ok(Ok(details)) => all_details.push(details),
+            Ok(Err(e)) => log::warn!("detail fetch returned error: {}", e),
+            Err(join_err) => log::warn!("detail fetch task panicked: {}", join_err),
         }
     }
 

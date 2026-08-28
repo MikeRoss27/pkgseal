@@ -40,9 +40,10 @@ impl AurSource {
         let sanitized = pkg.name.to_lowercase().replace(['_', '.'], "-");
         let pkg_name = PackageName::new(&sanitized).unwrap_or_else(|_| {
             // Fallback must be unique to avoid collisions on "invalid".
-            let fallback = format!("invalid-{}", pkg.id);
-            // `fallback` is controlled (prefix + numeric id) and always valid.
-            PackageName::new(&fallback).unwrap()
+            // pkg.id is numeric from AUR, so "aur-invalid-{id}" is guaranteed valid:
+            // lowercase alphanumeric + hyphen, doesn't start/end with separator.
+            let fallback = format!("aur-invalid-{}", pkg.id);
+            PackageName::new(&fallback).expect("aur-invalid-{id} format is always valid")
         });
         PackageSummary {
             id: format!("aur/{}", pkg.name),

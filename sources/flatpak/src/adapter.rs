@@ -150,13 +150,10 @@ impl FlatpakSource {
         // always fail PackageName validation; use the stable application_id instead.
         let sanitized = info.application_id.replace('.', "-").to_lowercase();
         let pkg_name = PackageName::new(&sanitized).unwrap_or_else(|_| {
-            let fallback = format!(
-                "flatpak-invalid-{}",
-                info.application_id.replace('.', "-").to_lowercase()
-            );
-            // fallback is controlled and should be valid; last resort to bare literal.
-            PackageName::new(&fallback)
-                .unwrap_or_else(|_| PackageName::new("flatpak-invalid").unwrap())
+            // application_id is reverse-DNS (com.example.app), so sanitized form
+            // "com-example-app" is guaranteed valid. Fallback adds prefix for uniqueness.
+            let fallback = format!("flatpak-invalid-{}", sanitized);
+            PackageName::new(&fallback).expect("flatpak-invalid-{sanitized} format is always valid")
         });
         PackageDetails {
             summary: PackageSummary {
