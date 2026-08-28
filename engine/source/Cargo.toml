@@ -1,0 +1,15 @@
+[package]
+name = "pkgseal-source"
+version = "0.1.0"
+edition = "2024"
+description = "PkgSeal source adapter traits and common DTOs"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+pkgseal-domain = { path = "../domain" }
+async-trait = { workspace = true }
+serde_json = "1.0"
+tracing = { workspace = true }
+tokio = { workspace = true, features = ["rt"] }

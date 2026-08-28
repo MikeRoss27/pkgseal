@@ -1,15 +1,24 @@
 # Rust
-target/
+/target/
+**/target/
 **/*.rs.bk
+
+# TypeScript incremental / caches
+*.tsbuildinfo
+.eslintcache
+.turbo/
+.parcel-cache/
 
 # Node / Bun
 node_modules/
 dist/
 coverage/
 .vite/
+# bun.lock is intentionally tracked — do not ignore it
+# legacy binary lock (pre-bun 1.1) — safe to ignore if it appears
+bun.lockb
 
-# Tauri generated
-apps/desktop/src-tauri/target/
+# Tauri generated (src-tauri/target already covered by **/target/)
 apps/desktop/src-tauri/gen/
 
 # Environment / secrets

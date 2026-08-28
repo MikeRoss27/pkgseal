@@ -712,9 +712,14 @@ Start here:
 
 ## License
 
-License selection is intentionally pending until the project repository and contribution strategy are finalized.
+Licensed under either of
 
-Do not assume a license until a `LICENSE` file is committed.
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+- MIT license ([LICENSE-MIT](LICENSE-MIT))
+
+at your option. See `Cargo.toml:17-20` (`license = "MIT OR Apache-2.0"`).
+
+SPDX: `MIT OR Apache-2.0`. Security policy: [SECURITY.md](SECURITY.md).
 
 ---
 

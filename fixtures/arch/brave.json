@@ -1,0 +1,30 @@
+{
+  "summary": {
+    "id": "arch/extra/brave",
+    "name": "brave",
+    "version": "1.70.123-1",
+    "description": "Web browser that blocks ads and trackers by default",
+    "source": "arch-official",
+    "repository": "extra",
+    "installed": false,
+    "downloadSize": 98765432,
+    "installedSize": 456789012
+  },
+  "architecture": "x86_64",
+  "maintainer": "Brave Software Inc.",
+  "url": "https://brave.com",
+  "license": "MPL-2.0",
+  "dependencies": ["gtk3", "nss", "alsa-lib"],
+  "optionalDependencies": [],
+  "provides": ["brave-browser"],
+  "conflicts": [],
+  "replaces": [],
+  "groups": [],
+  "buildDate": "2026-08-20T12:00:00Z",
+  "installDate": null,
+  "validation": "SHA256",
+  "rawMetadata": {
+    "Repository": "extra",
+    "Packager": "Brave Software Inc."
+  }
+}

@@ -1,0 +1,150 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RUSTFLAGS: "-D warnings"
+  RUST_BACKTRACE: 1
+
+jobs:
+  frontend:
+    name: Frontend (typecheck, lint, test, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./apps/desktop
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.0"
+
+      - name: Cache bun
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Test
+        run: bun run test
+
+      - name: Build
+        run: bun run build
+
+  rust:
+    name: Rust (fmt, clippy, test, build)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Format check
+        run: cargo fmt --check --all
+
+      - name: Clippy
+        run: cargo clippy --all -- -D warnings
+
+      - name: Test
+        run: cargo test --all
+
+      - name: Build
+        run: cargo build --all
+
+  security:
+    name: Security (audit, secrets)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.0"
+
+      - name: Audit npm dependencies
+        run: |
+          cd apps/desktop
+          bun audit --level moderate
+
+      - name: Audit cargo dependencies
+        run: |
+          cargo install cargo-audit --locked
+          cargo audit
+
+      - name: Forbidden patterns (no unwrap/expect/sh -c/PKGBUILD sourcing in prod)
+        run: |
+          echo "Checking for forbidden patterns in production Rust code..."
+          # unwrap() / expect() must not appear in non-test production code
+          # Allow unwrap_or / unwrap_or_else / unwrap_or_default — fail only on bare .unwrap()
+          if grep -R --include="*.rs" -n '\.unwrap()' engine sources apps/desktop/src-tauri 2>/dev/null | grep -v "unwrap_or" | grep -v "/tests/" | grep -v "test_" | grep -q "."; then
+            echo "::error::Found forbidden .unwrap() in production code:"
+            grep -R --include="*.rs" -n '\.unwrap()' engine sources apps/desktop/src-tauri 2>/dev/null | grep -v "unwrap_or" | head -n 20
+            exit 1
+          fi
+          if grep -R --include="*.rs" -n '\.expect(' engine sources apps/desktop/src-tauri 2>/dev/null | grep -v "/tests/" | grep -v "test_" | grep -q "."; then
+            echo "::error::Found forbidden .expect() in production code:"
+            grep -R --include="*.rs" -n '\.expect(' engine sources apps/desktop/src-tauri 2>/dev/null | head -n 20
+            exit 1
+          fi
+          # No shell-string execution or PKGBUILD sourcing
+          if grep -R --include="*.rs" -n 'sh -c' engine sources apps/desktop/src-tauri 2>/dev/null | grep -v "/tests/" | grep -q "."; then
+            echo "::error::Found forbidden 'sh -c' pattern in production code"
+            grep -R --include="*.rs" -n 'sh -c' engine sources apps/desktop/src-tauri 2>/dev/null | head -n 20
+            exit 1
+          fi
+          if grep -R --include="*.rs" -n 'source PKGBUILD' engine sources apps/desktop/src-tauri 2>/dev/null | grep -q "."; then
+            echo "::error::Found forbidden 'source PKGBUILD' pattern"
+            grep -R --include="*.rs" -n 'source PKGBUILD' engine sources apps/desktop/src-tauri 2>/dev/null | head -n 20
+            exit 1
+          fi
+          echo "No forbidden patterns found."
+
+      - name: Check for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: dev
+          head: HEAD

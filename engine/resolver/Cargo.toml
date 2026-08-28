@@ -1,0 +1,16 @@
+[package]
+name = "pkgseal-resolver"
+version = "0.1.0"
+edition = "2024"
+description = "PkgSeal identity resolver — groups package candidates into application identities"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+pkgseal-domain = { path = "../domain" }
+pkgseal-source = { path = "../source" }
+serde = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+uuid = { workspace = true, features = ["v4", "serde"] }
+indexmap = "2.0"
+regex = "1.10"
+serde_json = "1.0"

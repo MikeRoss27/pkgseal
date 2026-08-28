@@ -1,0 +1,15 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "base-nova",
+  "tailwind": {
+    "config": "",
+    "css": "src/styles/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": "cn"
+  },
+  "aliases": {
+    "components": "@/components/ui",
+    "utils": "@/lib/cn"
+  }
+}

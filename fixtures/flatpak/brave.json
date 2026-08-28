@@ -1,0 +1,32 @@
+{
+  "summary": {
+    "id": "flatpak/com.brave.Browser",
+    "name": "com-brave-browser",
+    "version": "1.70.123",
+    "description": "Brave Browser — Fast, private browser (Flathub)",
+    "source": "flatpak",
+    "repository": "flathub",
+    "installed": false,
+    "downloadSize": 123456789,
+    "installedSize": 543210987
+  },
+  "architecture": "x86_64",
+  "maintainer": "Brave Software Inc.",
+  "url": "https://brave.com",
+  "license": "MPL-2.0",
+  "dependencies": [],
+  "optionalDependencies": [],
+  "provides": [],
+  "conflicts": [],
+  "replaces": [],
+  "groups": [],
+  "buildDate": null,
+  "installDate": null,
+  "validation": "verified",
+  "rawMetadata": {
+    "application_id": "com.brave.Browser",
+    "origin": "flathub",
+    "verification": "verified",
+    "permissions": ["share=network", "socket=fallback-x11", "filesystem=home:ro"]
+  }
+}
