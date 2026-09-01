@@ -1,20 +1,28 @@
-# PkgSeal
+<div align="center">
+  <img src=".github/assets/brand/banner.png" alt="PkgSeal — the trust layer for Linux packages" width="100%" />
+</div>
 
-> **Find the right Linux package. Understand why. Install it with confidence.**
+<br />
+
+<div align="center">
+
+[![CI](https://github.com/MikeRoss27/pkgseal/actions/workflows/ci.yml/badge.svg)](https://github.com/MikeRoss27/pkgseal/actions/workflows/ci.yml)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](#license)
+[![Status: early foundation](https://img.shields.io/badge/status-early%20foundation-orange)](#project-status)
+
+</div>
 
 PkgSeal is a desktop application for discovering, comparing, evaluating, and eventually installing Linux software from multiple package sources.
 
-Instead of asking users to choose blindly between an official repository package, AUR package, Flatpak, vendor package, AppImage, or another distribution format, PkgSeal collects the available options, explains their provenance and trade-offs, and recommends the most appropriate source according to an explicit policy.
+Instead of asking users to choose blindly between an official repository package, an AUR package, a Flatpak, a vendor package, or another distribution format, PkgSeal collects the available options, inspects their provenance and trade-offs, and recommends the most appropriate source according to an explicit policy.
 
 PkgSeal starts with **Arch Linux**, but its core architecture is intentionally designed to support other Linux distributions later.
 
----
+<img src=".github/assets/brand/divider.png" alt="" width="100%" />
 
-## Why PkgSeal?
+## Overview
 
-Installing an application on Linux is often less obvious than it should be.
-
-Searching for a single application can produce several legitimate installation paths:
+Installing an application on Linux is often less obvious than it should be. Searching for a single application can produce several legitimate installation paths:
 
 ```text
 Brave Browser
@@ -25,57 +33,13 @@ Brave Browser
 └── other third-party distribution
 ```
 
-Those options are not equivalent.
+Those options are not equivalent. They can differ in publisher provenance, package maintainer, sandboxing, permissions, update mechanism, native integration, package signatures, build scripts, dependency model, upstream support, and security trade-offs.
 
-They may differ in:
-
-- publisher provenance;
-- package maintainer;
-- sandboxing;
-- permissions;
-- update mechanism;
-- native integration;
-- package signatures;
-- build scripts;
-- dependency model;
-- upstream support;
-- security trade-offs.
-
-Most package managers are excellent at managing **their own source**.
-
-PkgSeal focuses on the layer above them:
-
-```text
-Search
-  ↓
-Discover candidates
-  ↓
-Resolve application identity
-  ↓
-Collect evidence
-  ↓
-Apply policy
-  ↓
-Recommend
-  ↓
-Preview transaction
-  ↓
-Install
-```
-
-The goal is not to hide complexity behind a bigger **Install** button.
-
-The goal is to make the decision understandable.
-
----
-
-## Core principle
+Most package managers are excellent at managing **their own source**. PkgSeal focuses on the layer above them: evaluating the choice *before* installation, and making that choice explainable.
 
 > **PkgSeal must never hide a trust decision behind an Install button.**
 
-PkgSeal does not claim that a package is “100% safe”.
-
-Instead, recommendations are based on explicit evidence such as:
+PkgSeal does not claim that a package is "100% safe". Recommendations are based on explicit evidence:
 
 ```text
 ✓ package from an official repository
@@ -91,15 +55,27 @@ Instead, recommendations are based on explicit evidence such as:
 ⚠ unverified publisher
 ```
 
-No opaque `97/100 security score`.
+No opaque `97/100` security score. The user should always be able to understand **why** PkgSeal recommends one candidate over another.
 
-The user should always be able to understand **why** PkgSeal recommends one candidate over another.
+<img src=".github/assets/brand/divider.png" alt="" width="100%" />
 
----
+## How PkgSeal works
 
-## Example
+<div align="center">
+  <img src=".github/assets/brand/workflow.png" alt="PkgSeal workflow: discover, inspect, verify, compare, assess, recommend" width="100%" />
+</div>
 
-A future application page could look conceptually like this:
+| Step | What happens |
+| --- | --- |
+| **Discover** | Find available package/source candidates for the requested application. |
+| **Inspect** | Inspect relevant package and source metadata. |
+| **Verify** | Evaluate integrity and trust evidence, such as signatures and checksums. |
+| **Compare** | Compare the available candidates against each other. |
+| **Assess** | Identify suspicious or higher-risk characteristics. |
+| **Recommend** | Present the preferred option with supporting evidence. |
+
+<details>
+<summary>Example: how a recommendation is explained</summary>
 
 ```text
 Brave Browser
@@ -139,15 +115,47 @@ Build logic
 unchanged
 ```
 
-PkgSeal should make package provenance understandable without requiring every user to manually audit every source from scratch.
+</details>
 
----
+<!-- Screenshot / product preview: add apps/desktop screenshots to
+     .github/assets/brand/screenshots/ and reference them here once available. -->
+
+<img src=".github/assets/brand/divider.png" alt="" width="100%" />
+
+## Features
+
+<table>
+<tr>
+<td width="60" align="center"><img src=".github/assets/brand/icons/inspect.png" alt="" width="48" /></td>
+<td><strong>Inspect sources</strong><br />Collect and inspect metadata across Arch repositories, AUR, and Flatpak candidates for the same application.</td>
+</tr>
+<tr>
+<td align="center"><img src=".github/assets/brand/icons/verify.png" alt="" width="48" /></td>
+<td><strong>Verify integrity</strong><br />Evaluate integrity evidence such as package signatures and checksums.</td>
+</tr>
+<tr>
+<td align="center"><img src=".github/assets/brand/icons/compare.png" alt="" width="48" /></td>
+<td><strong>Compare options</strong><br />Compare equivalent packages side by side instead of picking one blindly.</td>
+</tr>
+<tr>
+<td align="center"><img src=".github/assets/brand/icons/provenance.png" alt="" width="48" /></td>
+<td><strong>Check provenance</strong><br />Distinguish official repositories from community-maintained content, and surface publisher verification and maintainer information.</td>
+</tr>
+<tr>
+<td align="center"><img src=".github/assets/brand/icons/risk.png" alt="" width="48" /></td>
+<td><strong>Assess risk</strong><br />Statically inspect AUR <code>PKGBUILD</code>s for risk patterns and surface Flatpak sandbox permissions — without ever executing untrusted build scripts.</td>
+</tr>
+<tr>
+<td align="center"><img src=".github/assets/brand/icons/recommend.png" alt="" width="48" /></td>
+<td><strong>Recommend</strong><br />Produce a policy-driven recommendation backed by explicit, readable evidence.</td>
+</tr>
+</table>
+
+<img src=".github/assets/brand/divider.png" alt="" width="100%" />
 
 ## Initial package sources
 
-The first supported ecosystem is Arch Linux.
-
-PkgSeal initially targets:
+The first supported ecosystem is Arch Linux. PkgSeal initially targets:
 
 - **Arch official repositories**
 - **AUR**
@@ -167,64 +175,88 @@ sources/
 └── appimage     # future
 ```
 
----
-
 ## Product policies
 
 Recommendations are policy-driven rather than hard-coded around a universal source ranking.
 
 Initial policy ideas include:
 
-### Balanced
+**Balanced** — balances provenance, upstream support, security, sandboxing, native integration, and maintainability.
 
-Balances:
+**Native First** — prefers native packages when their trust and maintenance characteristics are comparable.
 
-- provenance;
-- upstream support;
-- security;
-- sandboxing;
-- native integration;
-- maintainability.
+**Sandbox First** — prefers sandboxed desktop applications when their permissions remain reasonable.
 
-### Native First
+**Maximum Review** — requires stronger review before accepting community-maintained or broadly privileged packages.
 
-Prefers native packages when their trust and maintenance characteristics are comparable.
+A rule such as `Arch > Flatpak > AUR` is intentionally **not** treated as universally correct — the right choice can depend on the specific application.
 
-### Sandbox First
+<img src=".github/assets/brand/divider.png" alt="" width="100%" />
 
-Prefers sandboxed desktop applications when their permissions remain reasonable.
+## Installation
 
-### Maximum Review
+PkgSeal is in early foundation stage — there is no packaged release yet, and it does not modify your system. To run it from source:
 
-Requires stronger review before accepting community-maintained or broadly privileged packages.
+**Prerequisites**
 
-A rule such as:
+- [Rust](https://www.rust-lang.org/) (stable toolchain, see `rust-toolchain.toml`)
+- [Bun](https://bun.sh/) `1.4.0`
+- Tauri system dependencies on Linux: `libwebkit2gtk-4.1-dev`, `libgtk-3-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`, `patchelf`
 
-```text
-Arch > Flatpak > AUR
+**Run the desktop app in development**
+
+```bash
+cd apps/desktop
+bun install
+bun run tauri dev
 ```
 
-is intentionally **not** treated as universally correct.
+**Build a release bundle**
 
-The right choice can depend on the specific application.
+```bash
+cd apps/desktop
+bun run build:app
+```
 
----
+**Rust workspace**
+
+```bash
+cargo build --all
+cargo test --all
+```
+
+<img src=".github/assets/brand/divider.png" alt="" width="100%" />
+
+## Security / trust model
+
+Security issues should not be reported publicly before a responsible disclosure process is followed — see [`SECURITY.md`](SECURITY.md).
+
+PkgSeal itself follows the same principle it asks of package sources: provenance, review, explicit trust boundaries, and explainable decisions.
+
+- AUR `PKGBUILD` is treated as **untrusted data** — PkgSeal never sources or executes it to analyze a package. Static inspection may highlight patterns such as `curl | sh`, `wget | sh`, `eval`, unexpected privilege escalation, setuid changes, or downloaded code executed during build. A finding is not automatic proof of malicious behavior — PkgSeal reports facts and context rather than alarmist conclusions.
+- For Flatpak, PkgSeal surfaces publisher verification, application ID, remote, filesystem permissions, network access, and other sandbox characteristics. A verified publisher means stronger provenance evidence — it does not mean the application is guaranteed free of vulnerabilities.
+- The frontend (React/WebView) is unprivileged and may only invoke typed Tauri commands — never a generic `run_as_root(command)`.
+- Policy evaluation is deterministic (`Evidence → Policy → Recommendation`) — no opaque scores.
+
+Full threat model: [`docs/adr/001-core-architecture.md`](docs/adr/001-core-architecture.md). Reporting process: [`SECURITY.md`](SECURITY.md).
+
+<img src=".github/assets/brand/divider.png" alt="" width="100%" />
 
 ## Architecture
 
-PkgSeal is organized by product responsibility rather than by language.
+PkgSeal is organized by product responsibility rather than by language:
 
 ```text
 pkgseal/
 │
 ├── apps/
-│   └── desktop/
+│   └── desktop/         # Tauri 2 + React desktop application
 │
 ├── engine/
-│   ├── domain/
-│   ├── resolver/
-│   ├── policy/
-│   └── transactions/
+│   ├── domain/          # portable product logic and decisions
+│   ├── resolver/        # groups candidates into one application identity
+│   ├── policy/          # deterministic, explainable recommendations
+│   └── transactions/    # typed install/remove plans
 │
 ├── sources/
 │   ├── arch/
@@ -232,483 +264,84 @@ pkgseal/
 │   └── flatpak/
 │
 ├── platform/
-│   └── linux/
+│   └── linux/           # privileged system integration
 │
-├── testkit/
-├── fixtures/
-├── docs/
-└── scripts/
+├── testkit/             # reusable test infrastructure
+├── fixtures/            # deterministic source data for tests
+└── docs/                # architecture decisions
 ```
 
-The repository should be readable as:
+Design boundaries: `engine/domain` performs no network or system IO, `engine/policy` is deterministic and performs no IO, source adapters never define product policy, transaction plans are inspectable before execution, and privilege boundaries are explicit — the frontend is never given a generic `run_command_as_root(...)`.
+
+The desktop client is built with Tauri 2, React, TypeScript, Vite, Tailwind CSS, shadcn/ui, Base UI, TanStack Query, and Rust. Privileged actions route through a typed IPC boundary and Polkit authorization rather than an unrestricted shell:
 
 ```text
-apps       → what the user runs
-engine     → what PkgSeal thinks and decides
-sources    → where package information comes from
-platform   → how PkgSeal interacts with Linux
-testkit    → reusable test infrastructure
-fixtures   → deterministic source data for tests
-docs       → why architectural decisions exist
+React UI → typed IPC → Tauri boundary → PkgSeal engine → source adapters / Linux platform → typed transaction → privileged helper + Polkit
 ```
 
-Detailed architecture:
+Full details:
 
-- [`docs/architecture/overview.md`](docs/architecture/overview.md)
-- [`docs/adr/001-core-architecture.md`](docs/adr/001-core-architecture.md)
+- [Architecture Overview](docs/architecture/overview.md)
+- [Core Architecture ADR](docs/adr/001-core-architecture.md)
 
----
-
-## Desktop architecture
-
-The desktop client uses:
-
-- **Tauri 2**
-- **React**
-- **TypeScript**
-- **Vite**
-- **Tailwind CSS**
-- **shadcn/ui**
-- **Base UI**
-- **TanStack Query**
-- **Rust**
-
-The frontend is intentionally treated as an unprivileged UI layer.
-
-```text
-React UI
-   ↓ typed IPC
-Tauri application boundary
-   ↓
-PkgSeal engine
-   ↓
-source adapters / Linux platform
-   ↓
-typed transaction
-   ↓
-privileged helper + Polkit
-```
-
-The frontend must never receive a generic API such as:
-
-```text
-run_as_root(command)
-```
-
-Privileged actions must remain narrow and typed.
-
----
-
-## Rust core
-
-PkgSeal's sensitive logic lives in Rust.
-
-Initial core modules:
-
-```text
-engine/domain
-engine/resolver
-engine/policy
-engine/transactions
-```
-
-Source-specific integration remains outside the domain:
-
-```text
-sources/arch
-sources/aur
-sources/flatpak
-```
-
-Important design rules:
-
-- domain code performs no network or system IO;
-- the policy engine is deterministic;
-- source adapters do not define product policy;
-- transaction plans are inspectable before execution;
-- shell strings from user input are never executed;
-- privilege boundaries are explicit.
-
----
-
-## AUR security model
-
-AUR packages are treated as community-provided content.
-
-A `PKGBUILD` is data to inspect, not code to trust.
-
-PkgSeal must **never** do this merely to analyze a package:
-
-```bash
-source PKGBUILD
-```
-
-or:
-
-```bash
-bash PKGBUILD
-```
-
-Static inspection may highlight patterns such as:
-
-- `curl | sh`;
-- `wget | sh`;
-- `eval`;
-- unexpected privilege escalation;
-- setuid changes;
-- root ownership changes;
-- suspicious decoding or obfuscation;
-- downloaded code executed during build;
-- install scripts;
-- unexpected network access.
-
-A finding is not automatically proof of malicious behavior.
-
-PkgSeal should report facts and context rather than produce alarmist conclusions.
-
----
-
-## Flatpak model
-
-For Flatpak applications, PkgSeal should surface details such as:
-
-- publisher verification;
-- application ID;
-- remote;
-- filesystem permissions;
-- network access;
-- Wayland/X11 access;
-- device access;
-- D-Bus permissions;
-- runtime;
-- sandbox characteristics.
-
-A **verified publisher** means provenance has stronger evidence.
-
-It does **not** mean the application is guaranteed to be vulnerability-free.
-
----
-
-## Transaction model
-
-PkgSeal will eventually install and remove software, but installation is intentionally not the first milestone.
-
-Every mutation must first become a typed transaction plan:
-
-```text
-InstallTransaction
-├── source
-├── package
-├── version
-├── expected download
-├── expected disk change
-├── privileges required
-└── operations
-```
-
-Transaction states:
-
-```text
-Planned
-AwaitingConfirmation
-Authorizing
-Running
-Succeeded
-Failed
-Cancelled
-```
-
-The user should know what will happen before the machine is modified.
-
----
-
-## Privilege model
-
-PkgSeal must never store the user's sudo password.
-
-The target privilege architecture is:
-
-```text
-Desktop app
-   ↓
-Typed privileged request
-   ↓
-Polkit authorization
-   ↓
-Minimal privileged helper
-   ↓
-Specific package operation
-```
-
-Allowed design:
-
-```text
-install_arch_packages([...])
-remove_arch_packages([...])
-```
-
-Forbidden design:
-
-```text
-run_command_as_root("...")
-```
-
----
-
-## Design direction
-
-PkgSeal should feel like a polished desktop product, not a thin GUI over package-manager commands.
-
-The visual language targets:
-
-- compact desktop density;
-- neutral surfaces;
-- strong typography;
-- restrained borders;
-- subtle depth;
-- one primary accent;
-- clear success/warning/danger semantics;
-- excellent keyboard navigation;
-- dark and light themes;
-- accessible focus and contrast;
-- short, purposeful motion.
-
-The interface should remain calm even when displaying security information.
-
-No “hacker UI”.
-
-No warning-red everywhere.
-
----
+<img src=".github/assets/brand/divider.png" alt="" width="100%" />
 
 ## Development strategy
 
 PkgSeal is intentionally built **read-only first**.
 
-### Phase 0 — Foundation
+| Phase | Focus |
+| --- | --- |
+| 0 | Foundation — Tauri shell, React/Vite, Rust workspace, design system, CI, test infrastructure |
+| 1 | Package explorer — read-only search across Arch, AUR, Flatpak |
+| 2 | Resolver — group package candidates belonging to the same application |
+| 3 | Evidence — provenance, verification, permissions, AUR metadata, PKGBUILD findings |
+| 4 | Policy engine — deterministic, explainable recommendations |
+| 5 | Transaction preview — generate install/remove plans without executing them |
+| 6 | Arch transactions — controlled native package operations |
+| 7 | Flatpak transactions |
+| 8 | AUR transactions — only after the review and privilege model is mature |
+| 9 | Product polish — keyboard-first UX, command palette, accessibility, HiDPI, performance |
 
-- Tauri shell
-- React/Vite
-- Rust workspace
-- design system
-- CI
-- test infrastructure
-- SQLite foundation
-- security boundaries
+The first meaningful version of PkgSeal will **not install anything**. It should reliably perform: search → discover candidates → resolve identity → inspect evidence → compare sources → recommend one → explain why, for a reference corpus (Brave, Bitwarden, Discord, Spotify, Visual Studio Code, Steam, Obsidian). If PkgSeal cannot reliably explain those decisions, it is not ready to modify the system.
 
-### Phase 1 — Package explorer
+### Road to `v0.1-alpha`
 
-Implement read-only search for:
-
-- Arch
-- AUR
-- Flatpak
-
-### Phase 2 — Resolver
-
-Group package candidates belonging to the same real application.
-
-### Phase 3 — Evidence
-
-Collect:
-
-- provenance;
-- verification;
-- permissions;
-- AUR metadata;
-- PKGBUILD findings.
-
-### Phase 4 — Policy engine
-
-Produce deterministic and explainable recommendations.
-
-### Phase 5 — Transaction preview
-
-Generate install/remove plans without executing them.
-
-### Phase 6 — Arch transactions
-
-Introduce controlled native package operations.
-
-### Phase 7 — Flatpak transactions
-
-Add Flatpak installation and removal.
-
-### Phase 8 — AUR transactions
-
-Only after the review and privilege model is mature.
-
-### Phase 9 — Product polish
-
-- keyboard-first UX;
-- command palette;
-- accessibility;
-- HiDPI;
-- performance;
-- animations;
-- release hardening.
-
----
-
-## First milestone
-
-The first meaningful version of PkgSeal will **not install anything**.
-
-It should perform this pipeline extremely well:
-
-```text
-Search "Brave"
-        ↓
-Discover all candidates
-        ↓
-Resolve identity
-        ↓
-Inspect evidence
-        ↓
-Compare sources
-        ↓
-Recommend one
-        ↓
-Explain why
-```
-
-Reference applications for the first evaluation corpus:
-
-- Brave
-- Bitwarden
-- Discord
-- Spotify
-- Visual Studio Code
-- Steam
-- Obsidian
-
-If PkgSeal cannot reliably explain those decisions, it is not ready to modify the system.
-
----
+`v0.1-alpha` is complete when PkgSeal launches cleanly on Arch Linux, the desktop design system is stable, Arch/AUR/Flatpak search works, equivalent package candidates are grouped correctly, provenance and security evidence are visible, the policy engine produces explainable recommendations, critical tests work without network access, CI is green, no arbitrary shell execution is exposed, and **no system mutation is possible yet**.
 
 ## Testing philosophy
 
-Package management is too sensitive for “works on my machine”.
+Package management is too sensitive for "works on my machine". PkgSeal uses Rust unit tests, policy decision matrices, deterministic fixtures, frontend component tests, IPC boundary tests, and integration tests. Network responses used by core tests are captured as fixtures, and real installation tests never run against a developer's workstation — only disposable environments.
 
-PkgSeal uses:
-
-- Rust unit tests;
-- policy decision matrices;
-- deterministic fixtures;
-- frontend component tests;
-- IPC boundary tests;
-- integration tests;
-- disposable Arch environments for real package transactions.
-
-Network responses used by core tests should be captured as fixtures.
-
-Real installation tests must never run against the developer's workstation.
-
----
-
-## Quality gates
-
-Every merge should eventually require:
-
-```text
-Frontend
-├── lint
-├── typecheck
-├── tests
-└── build
-
-Rust
-├── cargo fmt --check
-├── cargo clippy -- -D warnings
-├── cargo test
-└── cargo build
-
-Security
-├── dependency audit
-├── secret scanning
-└── forbidden-pattern checks
-```
-
----
+Every merge requires frontend lint/typecheck/test/build, Rust `fmt`/`clippy`/`test`/`build`, and security checks (dependency audit, secret scanning, forbidden-pattern checks) — see [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ## Project status
 
-**Current status: early architecture / foundation**
+**Current status: early architecture / foundation.**
 
-PkgSeal is currently defining its architecture, trust model, UI foundations, and first read-only vertical slice.
+PkgSeal is currently defining its architecture, trust model, UI foundations, and first read-only vertical slice. The project is **not ready for production use** and should not yet be trusted to modify a real system.
 
-The project is **not ready for production use** and should not yet be trusted to modify a real system.
-
----
-
-## Road to `v0.1-alpha`
-
-`v0.1-alpha` is complete when:
-
-- PkgSeal launches cleanly on Arch Linux;
-- the desktop design system is stable;
-- Arch/AUR/Flatpak search works;
-- equivalent package candidates are grouped correctly;
-- provenance and security evidence are visible;
-- the policy engine produces explainable recommendations;
-- critical tests work without network access;
-- CI is green;
-- no arbitrary shell execution is exposed;
-- **no system mutation is possible yet**.
-
----
-
-## Security
-
-Security issues should not be reported publicly before a responsible disclosure process exists.
-
-A dedicated policy will live in:
-
-[`SECURITY.md`](SECURITY.md)
-
-PkgSeal itself follows the same principle it asks of package sources:
-
-> provenance, review, explicit trust boundaries, and explainable decisions.
-
----
+<img src=".github/assets/brand/divider.png" alt="" width="100%" />
 
 ## Contributing
 
-PkgSeal is currently in its foundation stage.
+PkgSeal is currently in its foundation stage. Contribution guidelines will be introduced once repository conventions are stable, CI is running, the first source adapter contracts are finalized, and coding/testing standards are enforced automatically.
 
-Contribution guidelines will be introduced once:
-
-- repository conventions are stable;
-- CI is running;
-- the first source adapter contracts are finalized;
-- coding and testing standards are enforced automatically.
-
-Until then, architecture changes should be documented through ADRs.
-
----
+Until then, architecture changes should be documented through ADRs in [`docs/adr/`](docs/adr/).
 
 ## Documentation
-
-Important project documents:
 
 ```text
 docs/
 ├── adr/
 │   └── 001-core-architecture.md
-│
 ├── architecture/
 │   └── overview.md
-│
 ├── security/
 └── product/
 ```
 
-Start here:
-
-- [Core Architecture ADR](docs/adr/001-core-architecture.md)
-- [Architecture Overview](docs/architecture/overview.md)
-
----
+Start here: [Core Architecture ADR](docs/adr/001-core-architecture.md) · [Architecture Overview](docs/architecture/overview.md)
 
 ## License
 
@@ -717,13 +350,12 @@ Licensed under either of
 - Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
 - MIT license ([LICENSE-MIT](LICENSE-MIT))
 
-at your option. See `Cargo.toml:17-20` (`license = "MIT OR Apache-2.0"`).
+at your option. SPDX: `MIT OR Apache-2.0`. Security policy: [SECURITY.md](SECURITY.md).
 
-SPDX: `MIT OR Apache-2.0`. Security policy: [SECURITY.md](SECURITY.md).
-
----
+<br />
 
 <p align="center">
-  <strong>PkgSeal</strong><br />
-  Find the right package. Understand why. Install it with confidence.
+  <img src=".github/assets/brand/logo.png" alt="PkgSeal" width="24" />
+  <br />
+  <strong>PkgSeal</strong> — the trust layer for Linux packages.
 </p>

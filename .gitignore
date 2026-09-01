@@ -52,3 +52,6 @@ bun-debug.log*
 tmp/
 temp/
 .cache/
+
+# Local Claude Code config
+.claude/

@@ -1,5 +1,8 @@
+use pkgseal_domain::PackageSource;
 use pkgseal_policy::{CandidateEvidence, Confidence, PolicyCandidate, Recommendation};
+use pkgseal_source::dto::PackageDetails;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 /// Input: policy preset string ("balanced", "native-first", "sandbox-first", "maximum-review")
 /// + candidates with evidence. Frontend builds this from resolver details (heuristic mapping).
@@ -309,6 +312,90 @@ pub fn heuristic_evidence_for_source(source: &pkgseal_domain::PackageSource) -> 
         pkgseal_domain::PackageSource::Flatpak => CandidateEvidence::flatpak_verified_narrow(),
         pkgseal_domain::PackageSource::Aur => CandidateEvidence::aur_community(),
     }
+}
+
+/// Build CandidateEvidence from PackageDetails.raw_metadata for a given source.
+/// This is the authoritative evidence builder used by the resolver command.
+/// Conservative defaults: missing fields are treated as false/empty.
+pub fn build_candidate_evidence(
+    source: PackageSource,
+    details: &PackageDetails,
+) -> CandidateEvidence {
+    let mut evidence = CandidateEvidence::default();
+    let raw = &details.raw_metadata;
+
+    match source {
+        PackageSource::ArchOfficial => {
+            evidence.is_official_repository = true;
+            evidence.signature_present = details
+                .validation
+                .as_ref()
+                .map(|v| v.to_ascii_lowercase().contains("signature"))
+                .unwrap_or(false);
+            evidence.checksum_present = true;
+            evidence.checksum_validated = true;
+            evidence.publisher_supported = details.maintainer.is_some();
+        }
+        PackageSource::Aur => {
+            evidence.is_community_maintained = true;
+            // findings from PKGBUILD static analysis
+            if let Some(Value::Array(arr)) = raw.get("findings") {
+                evidence.findings = arr
+                    .iter()
+                    .filter_map(|v| v.as_str().and_then(map_finding))
+                    .collect();
+            }
+            // install script present (.install file)
+            evidence.install_script_present = raw
+                .get("install_script")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
+            // build logic changed (heuristic: pkgbuild_findings_detail differs from findings)
+            evidence.build_logic_changed = raw
+                .get("pkgbuild_findings_detail")
+                .and_then(|v| v.as_array())
+                .map(|a| a.len() > evidence.findings.len())
+                .unwrap_or(false);
+            // checksum present if sha256sums in pkgbuild
+            evidence.checksum_present = raw
+                .get("sha256sums")
+                .or_else(|| raw.get("checksums"))
+                .is_some();
+        }
+        PackageSource::Flatpak => {
+            evidence.sandboxed = true;
+            // permission_level from parsed permissions
+            if let Some(Value::String(s)) = raw.get("permission_level") {
+                evidence.permission_level = map_permission_level(s);
+            }
+            // filesystem_access
+            if let Some(Value::String(s)) = raw.get("filesystem_access") {
+                evidence.filesystem_access = map_filesystem(s);
+            }
+            // dbus_access
+            if let Some(Value::String(s)) = raw.get("dbus_access") {
+                evidence.dbus_access = map_dbus(s);
+            }
+            // network_access
+            if let Some(Value::Bool(b)) = raw.get("network_access") {
+                evidence.network_access = *b;
+            }
+            // device_access
+            if let Some(Value::Bool(b)) = raw.get("device_access") {
+                evidence.device_access = *b;
+            }
+            // publisher_verified if verification field present and non-empty
+            evidence.publisher_verified = raw
+                .get("verification")
+                .and_then(|v| v.as_str())
+                .map(|s| !s.is_empty())
+                .unwrap_or(false);
+            evidence.publisher_supported = evidence.publisher_verified;
+            evidence.signature_present = true; // Flatpak uses ostree signatures
+        }
+    }
+
+    evidence
 }
 
 // Unused import helper used for confidence string mapping tests

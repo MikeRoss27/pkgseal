@@ -1,57 +1,67 @@
 @import "tailwindcss" prefix(cn);
 
+/* Self-hosted — served from 'self', required by the app's CSP (no external font-src) */
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/ibm-plex-sans/700.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #fcfcfc;
-  --foreground: #0a0a0a;
+  /* Ledger paper — warm, not clinical white */
+  --background: #f8f7f3;
+  --foreground: #14161d;
   --card: #ffffff;
-  --card-foreground: #0a0a0a;
+  --card-foreground: #14161d;
   --popover: #ffffff;
-  --popover-foreground: #0a0a0a;
-  --primary: #0a0a0a;
-  --primary-foreground: #fafafa;
-  --secondary: #f5f5f5;
-  --secondary-foreground: #171717;
-  --muted: #f5f5f5;
-  --muted-foreground: #737373;
-  --accent: #f5f5f5;
-  --accent-foreground: #171717;
-  --destructive: #e11d48;
+  --popover-foreground: #14161d;
+  /* The seal's ink-blue carries primary actions — not a flat black button */
+  --primary: #3d4a80;
+  --primary-foreground: #f6f7fc;
+  --secondary: #edece5;
+  --secondary-foreground: #24262c;
+  --muted: #efeee7;
+  --muted-foreground: #6c6a61;
+  --accent: #edece5;
+  --accent-foreground: #24262c;
+  --destructive: #b8203f;
   --destructive-foreground: #fafafa;
-  --border: #e8e8e8;
-  --input: #e8e8e8;
-  --ring: #0a0a0a;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #0a0a0a;
-  --sidebar-border: #e8e8e8;
-  --sidebar-accent: #f5f5f5;
+  --border: #e2e0d7;
+  --input: #e2e0d7;
+  --ring: #3d4a80;
+  --sidebar: #f3f2ec;
+  --sidebar-foreground: #14161d;
+  --sidebar-border: #e2e0d7;
+  --sidebar-accent: #e9e7de;
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #fafafa;
-  --card: #171717;
-  --card-foreground: #fafafa;
-  --popover: #171717;
-  --popover-foreground: #fafafa;
-  --primary: #fafafa;
-  --primary-foreground: #0a0a0a;
-  --secondary: #262626;
-  --secondary-foreground: #fafafa;
-  --muted: #262626;
-  --muted-foreground: #a3a3a3;
-  --accent: #262626;
-  --accent-foreground: #fafafa;
-  --destructive: #e11d48;
-  --destructive-foreground: #fafafa;
-  --border: #262626;
-  --input: #262626;
-  --ring: #d4d4d4;
-  --sidebar: #0a0a0a;
-  --sidebar-foreground: #fafafa;
-  --sidebar-border: #262626;
-  --sidebar-accent: #1a1a1a;
+  --background: #0d0e12;
+  --foreground: #f1f0eb;
+  --card: #16171c;
+  --card-foreground: #f1f0eb;
+  --popover: #16171c;
+  --popover-foreground: #f1f0eb;
+  --primary: #98a6e6;
+  --primary-foreground: #12142a;
+  --secondary: #232429;
+  --secondary-foreground: #f1f0eb;
+  --muted: #1c1d22;
+  --muted-foreground: #9c9a92;
+  --accent: #232429;
+  --accent-foreground: #f1f0eb;
+  --destructive: #ff637e;
+  --destructive-foreground: #0a0a0a;
+  --border: #26272d;
+  --input: #26272d;
+  --ring: #98a6e6;
+  --sidebar: #0d0e12;
+  --sidebar-foreground: #f1f0eb;
+  --sidebar-border: #26272d;
+  --sidebar-accent: #1a1b20;
 }
 
 @theme inline {
@@ -91,15 +101,16 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent: var(--sidebar-accent);
 
+  /* Instrument-panel radii — tighter than the default bubbly consumer scale */
   --radius-xs: 0.125rem;
   --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
-  --radius-2xl: 1rem;
+  --radius-md: 0.3125rem;
+  --radius-lg: 0.4375rem;
+  --radius-xl: 0.5625rem;
+  --radius-2xl: 0.75rem;
 
-  --font-sans: ui-sans-system, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 @layer base {

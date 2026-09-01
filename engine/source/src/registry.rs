@@ -5,6 +5,14 @@ use pkgseal_domain::PackageSource;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+// Concurrency is bounded to the number of registered sources (currently 3:
+// Arch/AUR/Flatpak), so an additional Semaphore is unnecessary here.
+// `is_available` is called per-operation without caching; if thundering-herd
+// becomes observable under repeated `search_all` calls, add a short-TTL cache
+// (e.g. 30s) for availability.  TODO: cache availability 30s if needed.
+// Detail-level fan-out (N summaries, up to 50) is bounded in
+// `apps/desktop/src-tauri/src/commands/resolver.rs` via `Semaphore(8)`.
+
 pub struct SourceRegistry {
     sources: HashMap<PackageSource, Arc<dyn PackageSourceAdapter>>,
 }
@@ -50,8 +58,11 @@ impl SourceRegistry {
         }
 
         let mut results = Vec::new();
-        while let Some(pkgs) = set.join_next().await {
-            results.extend(pkgs.unwrap_or_default());
+        while let Some(join_result) = set.join_next().await {
+            match join_result {
+                Ok(pkgs) => results.extend(pkgs),
+                Err(e) => tracing::warn!("Search task panicked or was cancelled: {}", e),
+            }
         }
         Ok(results)
     }
@@ -79,9 +90,11 @@ impl SourceRegistry {
         }
 
         let mut results = Vec::new();
-        while let Some(details) = set.join_next().await {
-            if let Some(details) = details.unwrap_or_default() {
-                results.push(details);
+        while let Some(join_result) = set.join_next().await {
+            match join_result {
+                Ok(Some(details)) => results.push(details),
+                Ok(None) => {}
+                Err(e) => tracing::warn!("Details task panicked or was cancelled: {}", e),
             }
         }
         if results.is_empty() {
@@ -112,8 +125,11 @@ impl SourceRegistry {
         }
 
         let mut results = Vec::new();
-        while let Some(pkgs) = set.join_next().await {
-            results.extend(pkgs.unwrap_or_default());
+        while let Some(join_result) = set.join_next().await {
+            match join_result {
+                Ok(pkgs) => results.extend(pkgs),
+                Err(e) => tracing::warn!("Installed task panicked or was cancelled: {}", e),
+            }
         }
         Ok(results)
     }

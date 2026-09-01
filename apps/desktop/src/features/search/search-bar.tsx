@@ -40,7 +40,8 @@ export function SearchBar({ value, onValueChange, isLoading, autoFocus = true, p
 
       <Input
         ref={inputRef}
-        type="search"
+        type="text"
+        role="searchbox"
         placeholder={placeholder}
         value={value}
         onChange={(event) => onValueChange(event.target.value)}

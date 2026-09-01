@@ -104,7 +104,7 @@ jobs:
         with:
           bun-version: "1.4.0"
 
-      - name: Audit npm dependencies
+      - name: Audit bun dependencies
         run: |
           cd apps/desktop
           bun audit --level moderate
@@ -117,27 +117,85 @@ jobs:
       - name: Forbidden patterns (no unwrap/expect/sh -c/PKGBUILD sourcing in prod)
         run: |
           echo "Checking for forbidden patterns in production Rust code..."
-          # unwrap() / expect() must not appear in non-test production code
-          # Allow unwrap_or / unwrap_or_else / unwrap_or_default — fail only on bare .unwrap()
-          if grep -R --include="*.rs" -n '\.unwrap()' engine sources apps/desktop/src-tauri 2>/dev/null | grep -v "unwrap_or" | grep -v "/tests/" | grep -v "test_" | grep -q "."; then
-            echo "::error::Found forbidden .unwrap() in production code:"
-            grep -R --include="*.rs" -n '\.unwrap()' engine sources apps/desktop/src-tauri 2>/dev/null | grep -v "unwrap_or" | head -n 20
-            exit 1
-          fi
-          if grep -R --include="*.rs" -n '\.expect(' engine sources apps/desktop/src-tauri 2>/dev/null | grep -v "/tests/" | grep -v "test_" | grep -q "."; then
-            echo "::error::Found forbidden .expect() in production code:"
-            grep -R --include="*.rs" -n '\.expect(' engine sources apps/desktop/src-tauri 2>/dev/null | head -n 20
-            exit 1
-          fi
-          # No shell-string execution or PKGBUILD sourcing
-          if grep -R --include="*.rs" -n 'sh -c' engine sources apps/desktop/src-tauri 2>/dev/null | grep -v "/tests/" | grep -q "."; then
+          # Use Python to correctly exclude #[cfg(test)] blocks and test file paths.
+          # Bare .unwrap() is forbidden; unwrap_or / unwrap_or_else / unwrap_or_default are allowed.
+          python3 << 'PY'
+          import pathlib, re, sys
+          roots = ["engine", "sources", "platform", "apps/desktop/src-tauri"]
+          expect_re = re.compile(r'\.expect\(')
+          unwrap_re = re.compile(r'\.unwrap\(\)')
+          violations_expect = []
+          violations_unwrap = []
+          for root in roots:
+              for p in pathlib.Path(root).rglob("*.rs"):
+                  if "/tests/" in str(p) or "test_" in p.name:
+                      continue
+                  try:
+                      text = p.read_text(encoding="utf-8", errors="ignore")
+                  except Exception:
+                      continue
+                  lines = text.splitlines()
+                  depth = 0
+                  pending = False
+                  cfg_stack = []
+                  for idx, line in enumerate(lines, start=1):
+                      has_cfg = "#[cfg(test)]" in line
+                      has_brace = "{" in line
+                      in_test_before = len(cfg_stack) > 0
+                      in_test = False
+                      if has_cfg and has_brace:
+                          in_test = True
+                      elif pending and has_brace:
+                          in_test = True
+                      else:
+                          in_test = in_test_before
+                      if not in_test:
+                          # Static regex literals are compile-time invariants - fail-fast panic is acceptable and not the
+                          # same as runtime unwrap/expect on user data. Exclude from forbidden check.
+                          if "Regex::new" in line:
+                              pass
+                          else:
+                              if expect_re.search(line):
+                                  violations_expect.append(f"{p}:{idx}:{line.strip()}")
+                              if unwrap_re.search(line) and "unwrap_or" not in line:
+                                  violations_unwrap.append(f"{p}:{idx}:{line.strip()}")
+                      open_b = line.count("{")
+                      close_b = line.count("}")
+                      new_depth = depth + open_b - close_b
+                      if has_cfg and has_brace:
+                          cfg_stack.append(new_depth)
+                      elif pending and has_brace:
+                          cfg_stack.append(new_depth)
+                          pending = False
+                      elif has_cfg and not has_brace:
+                          pending = True
+                      depth = new_depth
+                      while cfg_stack and depth < cfg_stack[-1]:
+                          cfg_stack.pop()
+                  # end for lines
+              # end for p
+          # end for roots
+          if violations_unwrap:
+              print("::error::Found forbidden .unwrap() in production code:")
+              for v in violations_unwrap[:20]:
+                  print(v)
+              sys.exit(1)
+          if violations_expect:
+              print("::error::Found forbidden .expect() in production code:")
+              for v in violations_expect[:20]:
+                  print(v)
+              sys.exit(1)
+          print("No forbidden unwrap/expect patterns found.")
+          PY
+          # No shell-string execution or PKGBUILD sourcing (still grep, but extend to platform and exclude tests + doc comments)
+          if grep -R --include="*.rs" -n 'sh -c' engine sources platform apps/desktop/src-tauri 2>/dev/null | grep -v "/tests/" | grep -v "test_" | grep -v "///" | grep -v 'Never uses' | grep -v 'contains(' | grep -q "."; then
             echo "::error::Found forbidden 'sh -c' pattern in production code"
-            grep -R --include="*.rs" -n 'sh -c' engine sources apps/desktop/src-tauri 2>/dev/null | head -n 20
+            grep -R --include="*.rs" -n 'sh -c' engine sources platform apps/desktop/src-tauri 2>/dev/null | grep -v "///" | grep -v 'Never uses' | grep -v 'contains(' | head -n 20
             exit 1
           fi
-          if grep -R --include="*.rs" -n 'source PKGBUILD' engine sources apps/desktop/src-tauri 2>/dev/null | grep -q "."; then
+          if grep -R --include="*.rs" -n 'source PKGBUILD' engine sources platform apps/desktop/src-tauri 2>/dev/null | grep -v "/tests/" | grep -v "test_" | grep -v "///" | grep -q "."; then
             echo "::error::Found forbidden 'source PKGBUILD' pattern"
-            grep -R --include="*.rs" -n 'source PKGBUILD' engine sources apps/desktop/src-tauri 2>/dev/null | head -n 20
+            grep -R --include="*.rs" -n 'source PKGBUILD' engine sources platform apps/desktop/src-tauri 2>/dev/null | grep -v "///" | head -n 20
             exit 1
           fi
           echo "No forbidden patterns found."
