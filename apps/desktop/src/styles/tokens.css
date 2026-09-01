@@ -1,0 +1,44 @@
+/* PkgSeal design tokens — §18 overview.md
+   Categories: surface / foreground / muted / border / accent / success / warning / danger / info
+   Imported after globals.css so its :root values are authoritative. */
+
+@layer base {
+  :root {
+    /* ── surface ── */
+    --surface: var(--background);
+    --surface-foreground: var(--foreground);
+
+    /* ── semantic light ── */
+    --success: #16a34a;
+    --success-foreground: #ffffff;
+    --warning: #d97706;
+    --warning-foreground: #ffffff;
+    --danger: var(--destructive);
+    --danger-foreground: var(--destructive-foreground);
+    --info: #2563eb;
+    --info-foreground: #ffffff;
+
+    /* Motion */
+    --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --duration-fast: 120ms;
+    --duration-normal: 180ms;
+  }
+
+  .dark {
+    --success: #22c55e;
+    --success-foreground: #0a0a0a;
+    --warning: #f59e0b;
+    --warning-foreground: #0a0a0a;
+    --danger: #ff637e;
+    --danger-foreground: #0a0a0a;
+    --info: #60a5fa;
+    --info-foreground: #0a0a0a;
+  }
+}
+
+/* Utility: subtle card hover lift */
+:root {
+  --shadow-soft: 0 1px 2px 0 rgb(0 0 0 / 0.05), 0 1px 3px 0 rgb(0 0 0 / 0.05);
+  --shadow-medium: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+}

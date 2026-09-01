@@ -1,0 +1,29 @@
+{
+  "summary": {
+    "id": "aur/brave-bin",
+    "name": "brave-bin",
+    "version": "1.70.123-1",
+    "description": "Web browser that blocks ads and trackers by default — binary release from AUR",
+    "source": "aur",
+    "repository": "aur",
+    "installed": false,
+    "downloadSize": 98765432,
+    "installedSize": 456789012
+  },
+  "architecture": "x86_64",
+  "maintainer": "aur-maintainer",
+  "url": "https://brave.com",
+  "license": "MPL-2.0",
+  "dependencies": ["gtk3"],
+  "optionalDependencies": [],
+  "provides": ["brave"],
+  "conflicts": ["brave"],
+  "replaces": [],
+  "groups": [],
+  "buildDate": null,
+  "installDate": null,
+  "validation": null,
+  "rawMetadata": {
+    "Maintainer": "aur-maintainer"
+  }
+}

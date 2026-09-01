@@ -1,0 +1,31 @@
+[workspace]
+resolver = "2"
+members = [
+    "apps/desktop/src-tauri",
+    "engine/domain",
+    "engine/source",
+    "engine/resolver",
+    "engine/policy",
+    "engine/transactions",
+    "platform/linux",
+    "sources/arch",
+    "sources/aur",
+    "sources/flatpak",
+    "testkit",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "PkgSeal — Package provenance & decision layer for Linux"
+
+[workspace.dependencies]
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "2.0"
+uuid = { version = "1.0", features = ["v4", "serde", "js"] }
+time = "0.3"
+tokio = { version = "1.0", features = ["full"] }
+async-trait = "0.1"
+regex = "1.10"
+tracing = "0.1"
