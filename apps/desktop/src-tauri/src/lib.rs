@@ -22,7 +22,14 @@ pub fn run() {
                 let _ = window.unminimize();
             }
         }))
-        .plugin(tauri_plugin_window_state::Builder::default().build())
+        .plugin(
+            // Decorations are hard-disabled in tauri.conf.json — never let a stale
+            // `.window-state.json` (e.g. from before that was set) restore `decorated: true`
+            // and re-persist itself into a self-perpetuating loop.
+            tauri_plugin_window_state::Builder::default()
+                .with_state_flags(tauri_plugin_window_state::StateFlags::all() - tauri_plugin_window_state::StateFlags::DECORATIONS)
+                .build(),
+        )
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_dialog::init())
