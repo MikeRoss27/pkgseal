@@ -72,39 +72,7 @@ export const PackageDetailsSchema = z.object({
 })
 export type PackageDetailsDto = z.infer<typeof PackageDetailsSchema>
 
-export const ResolvedApplicationSchema = z.object({
-  id: z.string(),
-  canonicalName: z.string(),
-  displayName: z.string(),
-  candidates: z.array(CandidateRefSchema),
-  primarySource: z.string().nullable(),
-  confidence: MatchConfidenceLevelSchema,
-  signals: z.array(SignalSchema),
-  candidateDetails: z.array(PackageDetailsSchema),
-})
-export type ResolvedApplicationDto = z.infer<typeof ResolvedApplicationSchema>
-
-export const ResolveResponseSchema = z.object({
-  applications: z.array(ResolvedApplicationSchema),
-})
-export type ResolveResponseDto = z.infer<typeof ResolveResponseSchema>
-
-// ── health / source availability ─────────────────────────────────────
-
-export const AppHealthSchema = z.object({
-  app_name: z.string(),
-  app_version: z.string(),
-  engine_sources: z.array(z.string()),
-})
-export type AppHealthDto = z.infer<typeof AppHealthSchema>
-
-export const SourceAvailabilitySchema = z.object({
-  source: z.string(),
-  available: z.boolean(),
-})
-export type SourceAvailabilityDto = z.infer<typeof SourceAvailabilitySchema>
-
-// ── policy ───────────────────────────────────────────────────────────────
+// ── policy (moved above ResolvedApplicationSchema: it embeds a RecommendationDto) ──
 
 export const CandidateEvidenceDtoSchema = z.object({
   isOfficialRepository: z.boolean(),
@@ -166,6 +134,42 @@ export const RecommendationDtoSchema = z.object({
   score: z.number(),
 })
 export type RecommendationDto = z.infer<typeof RecommendationDtoSchema>
+
+// ── resolver ─────────────────────────────────────────────────────────
+
+export const ResolvedApplicationSchema = z.object({
+  id: z.string(),
+  canonicalName: z.string(),
+  displayName: z.string(),
+  candidates: z.array(CandidateRefSchema),
+  primarySource: z.string().nullable(),
+  confidence: MatchConfidenceLevelSchema,
+  signals: z.array(SignalSchema),
+  candidateDetails: z.array(PackageDetailsSchema),
+  /** Real, backend-computed Balanced-preset recommendation for this application's candidates. */
+  recommendation: RecommendationDtoSchema.nullable().optional(),
+})
+export type ResolvedApplicationDto = z.infer<typeof ResolvedApplicationSchema>
+
+export const ResolveResponseSchema = z.object({
+  applications: z.array(ResolvedApplicationSchema),
+})
+export type ResolveResponseDto = z.infer<typeof ResolveResponseSchema>
+
+// ── health / source availability ─────────────────────────────────────
+
+export const AppHealthSchema = z.object({
+  app_name: z.string(),
+  app_version: z.string(),
+  engine_sources: z.array(z.string()),
+})
+export type AppHealthDto = z.infer<typeof AppHealthSchema>
+
+export const SourceAvailabilitySchema = z.object({
+  source: z.string(),
+  available: z.boolean(),
+})
+export type SourceAvailabilityDto = z.infer<typeof SourceAvailabilitySchema>
 
 export const EvaluatePolicyResponseSchema = z.object({
   recommendation: RecommendationDtoSchema,

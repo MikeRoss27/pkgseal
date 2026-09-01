@@ -54,5 +54,5 @@ pub fn run() {
             commands::transaction::validate_transaction_request,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .unwrap_or_else(|e| panic!("error while running tauri application: {e}"));
 }

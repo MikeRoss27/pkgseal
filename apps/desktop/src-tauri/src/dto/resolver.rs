@@ -1,3 +1,4 @@
+use crate::dto::policy::RecommendationDto;
 use pkgseal_resolver::identity::{ApplicationIdentity, CandidateRef, MatchSignal};
 use pkgseal_source::dto::PackageDetails;
 use serde::{Deserialize, Serialize};
@@ -25,6 +26,8 @@ pub struct ResolvedApplicationDto {
     pub confidence: String,
     pub signals: Vec<SignalDto>,
     pub candidate_details: Vec<PackageDetails>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub recommendation: Option<RecommendationDto>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,6 +57,7 @@ impl From<ApplicationIdentity> for ResolvedApplicationDto {
             confidence: format!("{:?}", identity.confidence),
             signals: identity.signals.into_iter().map(|s| s.into()).collect(),
             candidate_details: Vec::new(), // Will be filled by caller
+            recommendation: None,
         }
     }
 }

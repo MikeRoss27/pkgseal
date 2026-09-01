@@ -8,9 +8,10 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 pkgseal-domain = { path = "../../engine/domain" }
 pkgseal-source = { path = "../../engine/source" }
+pkgseal-policy = { path = "../../engine/policy" }
 serde = { workspace = true, features = ["derive"] }
 thiserror = { workspace = true }
-tokio = { workspace = true, features = ["process", "fs", "macros"] }
+tokio = { workspace = true, features = ["rt", "rt-multi-thread", "macros", "sync", "time", "process", "fs"] }
 regex = "1.10"
 async-trait = { workspace = true }
 tracing = { workspace = true }

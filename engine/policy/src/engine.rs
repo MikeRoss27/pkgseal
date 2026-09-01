@@ -52,10 +52,10 @@ pub fn evaluate(candidates: &[PolicyCandidate], policy: &Policy) -> Recommendati
     });
 
     // Winner is first after sorting.
-    let winner = scored
-        .first()
-        .cloned()
-        .expect("scored non-empty because candidates non-empty; invariant holds");
+    let winner = match scored.first().cloned() {
+        Some(w) => w,
+        None => return Recommendation::none(Confidence::None),
+    };
 
     // Confidence: based on separation from runner-up and absolute evidence quality.
     let confidence = derive_confidence(&scored);

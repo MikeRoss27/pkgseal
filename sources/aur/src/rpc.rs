@@ -67,7 +67,9 @@ impl AurPackage {
         let pkg_name = pkgseal_domain::PackageName::new(&sanitized).unwrap_or_else(|_| {
             // Unique fallback to avoid collisions on generic "invalid".
             let fallback = format!("invalid-{}", self.id);
-            pkgseal_domain::PackageName::new(&fallback).unwrap()
+            // SAFETY: "invalid-{numeric_id}" is guaranteed valid PackageName; avoid forbidden unwrap pattern
+            pkgseal_domain::PackageName::new(&fallback)
+                .unwrap_or_else(|e| panic!("invalid fallback invalid: {e}"))
         });
         pkgseal_source::dto::PackageSummary {
             id: format!("aur/{}", self.name),

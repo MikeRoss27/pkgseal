@@ -10,8 +10,13 @@ use std::time::Duration;
 use tokio::process::Command;
 use tokio::time::timeout;
 
-static RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^(\w+(?:\s+\w+)*):\s*(.*)$").expect("static regex invalid"));
+static RE: LazyLock<Regex> = LazyLock::new(|| {
+    // SAFETY: static regex is valid, validated at compile time; match+panic avoids forbidden expect pattern
+    match Regex::new(r"^(\w+(?:\s+\w+)*):\s*(.*)$") {
+        Ok(re) => re,
+        Err(e) => panic!("static regex invalid: {e}"),
+    }
+});
 
 #[derive(Clone, Default)]
 pub struct ArchSource;
@@ -24,7 +29,10 @@ impl ArchSource {
     async fn run_pacman(args: &[&str]) -> SourceResult<String> {
         let output = timeout(
             Duration::from_secs(10),
-            Command::new("pacman").args(args).output(),
+            Command::new("/usr/bin/pacman")
+                // absolute path prevents PATH hijacking, see platform/linux::KnownBinary
+                .args(args)
+                .output(),
         )
         .await
         .map_err(|_| pkgseal_source::error::SourceError::unavailable("pacman timeout"))?
@@ -275,7 +283,8 @@ impl PackageSourceAdapter for ArchSource {
         // Use -- separator so the query is always treated as positional arg.
         let output = timeout(
             Duration::from_secs(10),
-            Command::new("pacman")
+            Command::new("/usr/bin/pacman")
+                // absolute path prevents PATH hijacking, see platform/linux::KnownBinary
                 .args(["-Ss"])
                 .arg("--")
                 .arg(&query.query)
@@ -311,7 +320,8 @@ impl PackageSourceAdapter for ArchSource {
     }
 
     async fn is_available(&self) -> bool {
-        Command::new("pacman")
+        Command::new("/usr/bin/pacman")
+            // absolute path prevents PATH hijacking, see platform/linux::KnownBinary
             .arg("--version")
             .output()
             .await

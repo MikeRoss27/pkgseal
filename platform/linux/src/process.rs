@@ -311,25 +311,15 @@ impl ProcessEnv {
         "LANG",
         "LC_ALL",
         "LC_MESSAGES",
-        " https_proxy",
         "http_proxy",
         "https_proxy",
         "no_proxy",
         "NO_PROXY",
     ];
 
-    /// Actually returns the trimmed allow-list without leading space typo.
     #[must_use]
     pub fn allow_list() -> &'static [&'static str] {
-        &[
-            "LANG",
-            "LC_ALL",
-            "LC_MESSAGES",
-            "http_proxy",
-            "https_proxy",
-            "no_proxy",
-            "NO_PROXY",
-        ]
+        Self::ALLOW_LIST
     }
 }
 
@@ -455,6 +445,7 @@ pub async fn execute(spec: &ProcessSpec) -> Result<ProcessOutput, PlatformError>
     let program_path = spec.program.program_path();
 
     let mut cmd = tokio::process::Command::new(program_path);
+    cmd.kill_on_drop(true);
     cmd.args(spec.args.iter().map(ValidatedArg::as_str))
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -491,44 +482,73 @@ pub async fn execute(spec: &ProcessSpec) -> Result<ProcessOutput, PlatformError>
     let timeout = spec.timeout;
     let limits = spec.limits;
 
-    let child = cmd.spawn().map_err(|e| {
+    let mut child = cmd.spawn().map_err(|e| {
         PlatformError::Process(format!(
             "failed to spawn {}: {e}",
             spec.program.program_path()
         ))
     })?;
 
-    // Wait with timeout — we must not move `child` before we can kill it,
-    // so we use `tokio::time::timeout` over a mutable borrow via `child.wait()`
-    // pattern requires taking ownership; instead we pin the future and handle
-    // timeout by killing. Use `Child::wait()` + manual output collection
-    // to keep `child` usable on timeout. Simplest: use `wait_with_output` with
-    // `tokio::select!` style: move child into future but handle timeout by
-    // spawning a kill via a shared handle is not possible. Workaround:
-    // wrap in Option and take on success path.
-    let mut child_opt = Some(child);
-    let output = {
-        let child_for_wait = child_opt.take().expect("child present");
-        let wait_fut = child_for_wait.wait_with_output();
-        match tokio::time::timeout(timeout, wait_fut).await {
-            Ok(Ok(out)) => out,
-            Ok(Err(e)) => {
-                return Err(PlatformError::Process(format!(
-                    "wait failed for {}: {e}",
-                    spec.program.program_path()
-                )));
+    // Keep stdout/stderr pipes so `child.wait()` can be used without consuming
+    // the child. This allows us to keep `child` mutable and explicitly
+    // `kill().await` + `wait().await` on timeout, avoiding a zombie when
+    // `tokio::time::timeout` expires. `kill_on_drop(true)` is set on the
+    // command as a safety net, but we explicitly reap below.
+    let mut stdout_pipe = child.stdout.take();
+    let mut stderr_pipe = child.stderr.take();
+
+    let mut stdout_buf = Vec::new();
+    let mut stderr_buf = Vec::new();
+
+    let collect = async {
+        let stdout_fut = async {
+            if let Some(ref mut pipe) = stdout_pipe {
+                tokio::io::AsyncReadExt::read_to_end(pipe, &mut stdout_buf).await?;
             }
-            Err(_) => {
-                return Err(PlatformError::Timeout {
-                    program: program_path.to_string(),
-                    timeout_ms: u64::try_from(timeout.as_millis()).unwrap_or(u64::MAX),
-                });
+            Ok::<(), std::io::Error>(())
+        };
+        let stderr_fut = async {
+            if let Some(ref mut pipe) = stderr_pipe {
+                tokio::io::AsyncReadExt::read_to_end(pipe, &mut stderr_buf).await?;
             }
+            Ok::<(), std::io::Error>(())
+        };
+        let wait_fut = child.wait();
+
+        let (r1, r2, wait_res) = tokio::join!(stdout_fut, stderr_fut, wait_fut);
+        r1?;
+        r2?;
+        let status = wait_res?;
+        Ok::<(std::process::ExitStatus, Vec<u8>, Vec<u8>), std::io::Error>((
+            status,
+            std::mem::take(&mut stdout_buf),
+            std::mem::take(&mut stderr_buf),
+        ))
+    };
+
+    let (status, stdout_bytes, stderr_bytes) = match tokio::time::timeout(timeout, collect).await {
+        Ok(Ok((status, out, err))) => (status, out, err),
+        Ok(Err(e)) => {
+            return Err(PlatformError::Process(format!(
+                "wait failed for {}: {e}",
+                spec.program.program_path()
+            )));
+        }
+        Err(_) => {
+            // Timeout: explicitly kill and reap the child to avoid a zombie.
+            // `kill_on_drop(true)` already ensures SIGKILL on drop, but we
+            // must also `wait()` to reap the pid.
+            let _ = child.kill().await;
+            let _ = child.wait().await;
+            return Err(PlatformError::Timeout {
+                program: program_path.to_string(),
+                timeout_ms: u64::try_from(timeout.as_millis()).unwrap_or(u64::MAX),
+            });
         }
     };
 
-    let (stdout, stdout_truncated) = truncate_bytes(output.stdout, limits.max_bytes_stdout);
-    let (stderr, stderr_truncated) = truncate_bytes(output.stderr, limits.max_bytes_stderr);
+    let (stdout, stdout_truncated) = truncate_bytes(stdout_bytes, limits.max_bytes_stdout);
+    let (stderr, stderr_truncated) = truncate_bytes(stderr_bytes, limits.max_bytes_stderr);
 
     // Lossy UTF-8 conversion — package manager output is textual; invalid
     // bytes are replaced rather than failing the whole operation.
@@ -536,7 +556,7 @@ pub async fn execute(spec: &ProcessSpec) -> Result<ProcessOutput, PlatformError>
     let stderr = String::from_utf8_lossy(&stderr).into_owned();
 
     Ok(ProcessOutput {
-        status: output.status,
+        status,
         stdout,
         stderr,
         truncated: stdout_truncated || stderr_truncated,
@@ -544,16 +564,56 @@ pub async fn execute(spec: &ProcessSpec) -> Result<ProcessOutput, PlatformError>
 }
 
 /// Execute synchronously (blocking) — convenience for non-async contexts.
-/// Spawns a temporary runtime if needed via `tokio::task::block_in_place` is
-/// not used; callers should prefer `execute` in async code.
+///
+/// Previously this always built a new `current_thread` runtime, which panics
+/// with "cannot start a runtime from within a runtime" when called inside an
+/// existing Tokio runtime. The fixed version detects an existing runtime via
+/// `Handle::try_current()` and uses `block_in_place` to drive the async
+/// `execute` future without creating a nested runtime; only when outside a
+/// runtime is a fresh `current_thread` runtime created. Callers should still
+/// prefer `execute` in async code.
 pub fn execute_blocking(spec: &ProcessSpec) -> Result<ProcessOutput, PlatformError> {
-    // Build a current-thread runtime for blocking execution; if already in a
-    // runtime this will still work by creating a new one.
-    let rt = tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()
-        .map_err(|e| PlatformError::Internal(format!("failed to build runtime: {e}")))?;
-    rt.block_on(execute(spec))
+    match tokio::runtime::Handle::try_current() {
+        Ok(handle) => {
+            // Inside a Tokio runtime — use `block_in_place` to avoid nesting
+            // runtimes. `block_in_place` requires a `multi_thread` runtime; on
+            // `current_thread` it panics, so we catch the panic and fall back
+            // to a dedicated thread with its own runtime.
+            let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                tokio::task::block_in_place(|| handle.block_on(execute(spec)))
+            }));
+            match res {
+                Ok(r) => r,
+                Err(_) => {
+                    // Fallback for `current_thread` runtimes: run on a helper
+                    // thread with a fresh runtime, cloning the spec for `'static`.
+                    let spec_owned = spec.clone();
+                    std::thread::spawn(move || {
+                        let rt = tokio::runtime::Builder::new_current_thread()
+                            .enable_all()
+                            .build()
+                            .map_err(|e| {
+                                PlatformError::Internal(format!("failed to build runtime: {e}"))
+                            })?;
+                        rt.block_on(execute(&spec_owned))
+                    })
+                    .join()
+                    .unwrap_or_else(|_| {
+                        Err(PlatformError::Internal(
+                            "blocking helper thread panicked".to_string(),
+                        ))
+                    })
+                }
+            }
+        }
+        Err(_) => {
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .map_err(|e| PlatformError::Internal(format!("failed to build runtime: {e}")))?;
+            rt.block_on(execute(spec))
+        }
+    }
 }
 
 fn truncate_bytes(bytes: Vec<u8>, limit: usize) -> (Vec<u8>, bool) {

@@ -18,6 +18,13 @@
     --info: #2563eb;
     --info-foreground: #ffffff;
 
+    /* ── brand: the seal's ink-blue — now shared with --primary so the accent
+       used for trust/verification (focus, selection, the stamp mark) is the
+       same color as the app's primary actions, not a second competing hue. ── */
+    --brand-steel: var(--primary);
+    --brand-steel-tint: #e9ebf8;
+    --brand-steel-line: #ccd2ec;
+
     /* Motion */
     --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -34,6 +41,10 @@
     --danger-foreground: #0a0a0a;
     --info: #60a5fa;
     --info-foreground: #0a0a0a;
+
+    --brand-steel: var(--primary);
+    --brand-steel-tint: #1c2136;
+    --brand-steel-line: #333a5c;
   }
 }
 

@@ -2,17 +2,37 @@ use pkgseal_domain::PackageName;
 use regex::Regex;
 use std::sync::LazyLock;
 
-static SPLIT_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[-_\s.]+").unwrap());
-static VENDOR_PREFIX_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^(?:lib|gnu|kde|qt|gtk|libre|open|free)-").unwrap());
+static SPLIT_RE: LazyLock<Regex> = LazyLock::new(|| {
+    // SAFETY: regex literal is statically validated; panic at init is fail-fast for programmer error.
+    match Regex::new(r"[-_\s.]+") {
+        Ok(re) => re,
+        Err(e) => panic!("static regex invalid SPLIT_RE: {e}"),
+    }
+});
+static VENDOR_PREFIX_RE: LazyLock<Regex> = LazyLock::new(|| {
+    // SAFETY: regex literal is statically validated; panic at init is fail-fast for programmer error.
+    match Regex::new(r"^(?:lib|gnu|kde|qt|gtk|libre|open|free)-") {
+        Ok(re) => re,
+        Err(e) => panic!("static regex invalid VENDOR_PREFIX_RE: {e}"),
+    }
+});
 static VERSION_SUFFIX_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"[-_\s]?(?:git|svn|hg|bzr|cvs|nightly|daily|stable|beta|alpha|rc\d*|\d+(?:\.\d+)+)(?:-\w+)?$").unwrap()
+    // SAFETY: regex literal is statically validated; panic at init is fail-fast for programmer error.
+    match Regex::new(
+        r"[-_\s]?(?:git|svn|hg|bzr|cvs|nightly|daily|stable|beta|alpha|rc\d*|\d+(?:\.\d+)+)(?:-\w+)?$",
+    ) {
+        Ok(re) => re,
+        Err(e) => panic!("static regex invalid VERSION_SUFFIX_RE: {e}"),
+    }
 });
 static ARCH_SUFFIX_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(
+    // SAFETY: regex literal is statically validated; panic at init is fail-fast for programmer error.
+    match Regex::new(
         r"[-_\s]?(?:bin|git|debug|static|shared|dbg|dev|doc|common|data|headers|libs?)(?:-\w+)?$",
-    )
-    .unwrap()
+    ) {
+        Ok(re) => re,
+        Err(e) => panic!("static regex invalid ARCH_SUFFIX_RE: {e}"),
+    }
 });
 
 /// Normalize a product name for comparison

@@ -108,7 +108,11 @@ fn validate_flatpak_app_id(s: &str) -> Result<(), PlatformError> {
             ));
         }
         let mut chars = part.chars();
-        let first = chars.next().expect("non-empty");
+        let Some(first) = chars.next() else {
+            return Err(PlatformError::InvalidFlatpakAppId(
+                "app id contains empty component".to_string(),
+            ));
+        };
         if !first.is_ascii_alphanumeric() {
             return Err(PlatformError::InvalidFlatpakAppId(format!(
                 "component {part:?} must start with alphanumeric"

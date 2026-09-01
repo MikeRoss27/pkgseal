@@ -10,7 +10,7 @@ pkgseal-domain = { path = "../../engine/domain" }
 pkgseal-source = { path = "../../engine/source" }
 serde = { workspace = true, features = ["derive"] }
 thiserror = { workspace = true }
-tokio = { workspace = true, features = ["process", "fs", "macros"] }
+tokio = { workspace = true, features = ["rt", "rt-multi-thread", "macros", "sync", "time", "process", "fs"] }
 regex = "1.10"
 async-trait = { workspace = true }
 tracing = { workspace = true }
