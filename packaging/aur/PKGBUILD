@@ -1,0 +1,39 @@
+# Maintainer: MikeRoss27 <pro.cofoundr@gmail.com>
+pkgname=pkgseal
+pkgver=0.1.0alpha
+pkgrel=1
+pkgdesc="Inspect, compare and trust-verify packages across Arch, AUR and Flatpak before you install them"
+arch=('x86_64')
+url="https://github.com/MikeRoss27/pkgseal"
+license=('MIT' 'Apache-2.0')
+depends=('webkit2gtk-4.1' 'gtk3' 'libayatana-appindicator' 'librsvg')
+makedepends=('rust' 'bun' 'patchelf' 'pkgconf')
+options=('!lto')
+source=("$pkgname-$pkgver.tar.gz::https://github.com/MikeRoss27/pkgseal/archive/v0.1.0-alpha.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+  cd "pkgseal-0.1.0-alpha/apps/desktop"
+  bun install --frozen-lockfile
+  # Only the .deb is needed here — its data.tar.* is unpacked in package() to get
+  # the binary, .desktop file and icons without hand-maintaining a duplicate set.
+  bun run tauri build --bundles deb
+}
+
+package() {
+  cd "$srcdir/pkgseal-0.1.0-alpha"
+
+  local debfile
+  debfile=$(find . -name '*.deb' -print -quit)
+
+  local debroot="$srcdir/deb-root"
+  mkdir -p "$debroot"
+  bsdtar -C "$debroot" -xf "$debfile"
+
+  local datatar
+  datatar=$(find "$debroot" -maxdepth 1 -name 'data.tar.*' -print -quit)
+  bsdtar -C "$pkgdir" -xf "$datatar"
+
+  install -Dm644 LICENSE-MIT "$pkgdir/usr/share/licenses/$pkgname/LICENSE-MIT"
+  install -Dm644 LICENSE-APACHE "$pkgdir/usr/share/licenses/$pkgname/LICENSE-APACHE"
+}
